@@ -11,53 +11,36 @@ import sys
 import cv2
 import numpy as np
 
-def genlinfuncs(ulx, uly, urx, ury, llx, lly, lrx, lry):
-        ayu = (float(ury)-float(uly))/(float(urx)-float(ulx))
-        fyu = lambda x: x * ayu + (float(uly)-(float(ulx)*ayu))
-
-        ayl = (float(lry)-float(lly))/(float(lrx)-float(llx))
-        fyl = lambda x: x * ayl + (float(lly)-(float(llx)*ayl))
-
-        axl = (float(llx)-float(ulx))/(float(lly)-float(uly))
-        fxl = lambda y: y * axl + (float(ulx)-(float(uly)*axl))
-
-        axr = (float(lrx)-float(urx))/(float(lry)-float(ury))
-        fxr = lambda y: y * axr + (float(urx)-(float(ury)*axr))
-
-#	print "yu", ayu, (float(uly)-(float(ulx)*ayu))
-#	print "yl", ayl, (float(lly)-(float(llx)*ayl))
-#	print "xl", axl, (float(ulx)-(float(uly)*axl))
-#	print "xr", axr, (float(urx)-(float(ury)*axr))
-	
-	return (fyu, fyl, fxl, fxr)
-
-def genmask(fyu, fyl, fxl, fxr, size):
+def genMapFromHom(H, size):
 	(ys,xs) = size
-	
 	xmap = np.empty((ys,xs), dtype=np.float32)
 	ymap = np.empty((ys,xs), dtype=np.float32)
-	
+	xymap = np.empty((ys,xs,2))
 	for y in range(int(ys)):
 		for x in range(int(xs)):
-			xmap[y,x] = (xs/(fxr(float(y))-fxl(float(y))))*(float(x)-fxl(float(y)))
-			ymap[y,x] = (ys/(fyl(float(x))-fyu(float(x))))*(float(y)-fyu(float(x)))
-			
-#	print xmap
-#	print ymap
-	
-	np.clip(xmap, 0, xs-1, xmap)
-	np.clip(ymap, 0, ys-1, ymap)
-	
-	return (xmap,ymap)
+			xymap[y,x] = [x,y]
+	#sys.stderr.write(str(xymap.shape))
+	hmap = cv2.warpPerspective(xymap, H, (int(xs),int(ys)), flags=cv2.INTER_CUBIC)
+	#sys.stderr.write(str(hmap.shape))
+	for y in range(int(ys)):
+                for x in range(int(xs)):
+                        xmap[y,x] = hmap[y,x,0]
+                        ymap[y,x] = hmap[y,x,1]
+	return (xmap, ymap)
 
 def stretchimg(img, xmap, ymap):
-	return cv2.remap(img, xmap, ymap, cv2.INTER_LINEAR) 
+	return cv2.remap(img, xmap, ymap, cv2.INTER_LINEAR)
 
 def cpvid(cvreader, writefunc, xmap, ymap):
 	good, mat = cvreader.read()
 	while good:
+#		cv2.imshow("In", mat)
 		img = stretchimg(mat, xmap, ymap)
+#		sys.stderr.write(str(mat.shape))
+#		sys.stderr.write(str(img.shape))
+#		cv2.imshow("Out", img)
 		writefunc(img)
+#		cv2.waitKey(1)
 #		print img
 #		print img.dtype
 #		cv2.imshow("Default",img)
@@ -75,14 +58,21 @@ class OpenCVVidWriter(object):
 
 if __name__ == "__main__":
 	cvreader = cv2.VideoCapture(sys.argv[9])
-	(fyu, fyl, fxl, fxr) = genlinfuncs(
-				float(sys.argv[1]),float(sys.argv[2]), # ulx, uly
-				float(sys.argv[3]),float(sys.argv[4]), # urx, ury
-				float(sys.argv[5]),float(sys.argv[6]), # llx, lly
-				float(sys.argv[7]),float(sys.argv[8]), # lrx, lry
-				)
-	
-	(xmap,ymap) = genmask(fyu, fyl, fxl, fxr, (cvreader.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT),cvreader.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)))
+	H = cv2.getPerspectiveTransform(
+			np.array([
+				(0,0),
+				(cvreader.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH),0),
+				(0,cvreader.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)),
+				(cvreader.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH),cvreader.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT))
+				], dtype=np.float32),
+			np.array([
+				(sys.argv[1],sys.argv[2]), # ulx, uly
+				(sys.argv[3],sys.argv[4]), # urx, ury
+				(sys.argv[5],sys.argv[6]), # llx, lly
+				(sys.argv[7],sys.argv[8])  # lrx, lry
+				], dtype=np.float32))
+	#sys.stderr.write(str(H))
+	(xmap, ymap) = genMapFromHom(H, (cvreader.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT),cvreader.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)))
 	
 	write = RAWVidWriter().write
 	

@@ -5,16 +5,11 @@ Skripte, die ich für die Video AG entwickle.
 cornerpin.py is a tool to apply the Adobe Premiere Pro Corner Pin
 Effekt, but in a faster Way.
 
-It gets the coordinates of the corners as argument, computes linear
-functions between the corners and generates opencv.remap matrixes
-to finally apply opencv remap.
+It gets the coordinates of the corners as argument, computes a homographie
+between the original image and the warped image and generates opencv.remap
+matrixes to finally apply opencv remap.
 
-By adding other function-generators, most of the code can be
-re-used when implementing the straighten program or even more
-complex mappings.
-
-Currently, the Cornerpin result here differs a bit (too much) from
-Premieres result. I am not sure weather it is my fault or premiere's.
+The way using remap is faster than applying cv2.warpPerspective on every frame.
 
 ## diff.py
 diff.py is a tool, to read a video and generate a black/white-mask,
