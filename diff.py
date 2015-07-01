@@ -6,8 +6,8 @@ import math
 import os
 import sys
 
-n = 8 # Frames to go back to compare to
-blend = 0.01 # Fade older diffs out with e^blend
+n = 5 # Frames to go back to compare to
+blend = 0.3 # Fade older diffs out with e^blend
 
 # Das Rumrechnen zum ein- und ausfaden ist ganz grosses gefrikel. Ich wuerde
 # das gerne konfigurierbar machen, habe aber zu viel Angst, dabei Sachen kapput
@@ -179,7 +179,7 @@ while True:
 	cv2.imshow("Diff", frameDelta)
 	cv2.imshow("Thresh", thresh )
 	cv2.waitKey(1)
-#	last=gray
+	lastdiff=frameDelta
 	cn = (cn+1)%n
 
 bwriter.writeall()
