@@ -15,17 +15,14 @@ def genMapFromHom(H, size):
 	(ys,xs) = size
 	xmap = np.empty((ys,xs), dtype=np.float32)
 	ymap = np.empty((ys,xs), dtype=np.float32)
-	xymap = np.empty((ys,xs,2))
+	xtmap = np.empty((ys,xs), dtype=np.float32)
+	ytmap = np.empty((ys,xs), dtype=np.float32)
 	for y in range(int(ys)):
 		for x in range(int(xs)):
-			xymap[y,x] = [x,y]
-	#sys.stderr.write(str(xymap.shape))
-	hmap = cv2.warpPerspective(xymap, H, (int(xs),int(ys)), flags=cv2.INTER_CUBIC)
-	#sys.stderr.write(str(hmap.shape))
-	for y in range(int(ys)):
-                for x in range(int(xs)):
-                        xmap[y,x] = hmap[y,x,0]
-                        ymap[y,x] = hmap[y,x,1]
+			xtmap[y,x] = x
+			ytmap[y,x] = y
+	xmap = cv2.warpPerspective(xtmap, H, (int(xs),int(ys)), flags=cv2.INTER_CUBIC)
+	ymap = cv2.warpPerspective(ytmap, H, (int(xs),int(ys)), flags=cv2.INTER_CUBIC)
 	return (xmap, ymap)
 
 def stretchimg(img, xmap, ymap):
