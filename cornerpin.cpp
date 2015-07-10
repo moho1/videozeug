@@ -9,10 +9,14 @@
 #include <opencv/highgui.h>
 
 //#define CP_SHOW
-#define CP_OCL
+//#define CP_OCL_CV2
+#define CP_OCL_CV3
 
-#ifdef CP_OCL
+#ifdef CP_OCL_CV2
 #include <opencv2/ocl/ocl.hpp>
+#endif
+#ifdef CP_OCL_CV3
+#include <opencv2/core/ocl.hpp>
 #endif
 
 using namespace cv;
@@ -37,19 +41,23 @@ double timer()
 }
 
 void cpvid(VideoCapture &invid, VideoWriter &outvid, cv::Mat H) {
-#ifdef CP_OCL
+#ifdef CP_OCL_CV2
 	cv::Mat cpuframe;
 	cv::ocl::oclMat inframe, outframe, oclH;
 	oclH = H;
 #else
+#ifdef CP_OCL_CV3
 	cv::Mat inframe, outframe;
+#else
+	cv::Mat inframe, outframe;
+#endif
 #endif	
 	
 	double starttime = timer();
 	double now;
 	
 	for (int counter = 0; ; counter++) {
-#ifdef CP_OCL
+#ifdef CP_OCL_CV2
 		if (!invid.read(cpuframe)) break;
 		inframe = cpuframe;
 		cv::ocl::warpPerspective(inframe, outframe, oclH, cv::Size(1920,1080));
@@ -74,6 +82,9 @@ void cpvid(VideoCapture &invid, VideoWriter &outvid, cv::Mat H) {
 }
 
 int main(int argc, char **argv) {
+	#ifdef CP_OCL_CV3
+	cv::ocl::setUseOpenCL(true);
+	#endif
 	int fourcc = CV_FOURCC('M','J','P','G');
 	
 	VideoCapture invid(argv[9]);
