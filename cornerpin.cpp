@@ -62,7 +62,7 @@ void cpvid(VideoCapture &invid, VideoWriter &outvid, cv::Mat H) {
 		cv::imshow("Output", outframe);
 		cv::waitKey(1);
 #endif
-//		outvid.write(outframe);
+		outvid.write(outframe);
 //		std::cout << outframe.toString();
 		now = timer();
 		std::cerr 
@@ -83,7 +83,8 @@ int main(int argc, char **argv) {
 	VideoWriter outvid(argv[10], 
 		fourcc,
 		25,
-		cv::Size(1920,1080));
+		cv::Size(1920,1080),
+		true);
 	std::cerr << "writer open? " << (outvid.isOpened() ? "yes" : "NO") << std::endl;
 	
 	
