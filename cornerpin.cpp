@@ -47,7 +47,7 @@ void cpvid(VideoCapture &invid, VideoWriter &outvid, cv::Mat H) {
 	oclH = H;
 #else
 #ifdef CP_OCL_CV3
-	cv::UMat inframe, oclH;
+	cv::UMat inframe, gpuoutframe, oclH;
 	cv::Mat outframe;
 	H.copyTo(oclH);
 #else
@@ -66,7 +66,8 @@ void cpvid(VideoCapture &invid, VideoWriter &outvid, cv::Mat H) {
 #else
 #ifdef CP_OCL_CV3
 		if (!invid.read(inframe)) break;
-		cv::warpPerspective(inframe, outframe, oclH, cv::Size(1920,1080));
+		cv::warpPerspective(inframe, gpuoutframe, oclH, cv::Size(1920,1080));
+		gpuoutframe.copyTo(outframe);
 #else
 		if (!invid.read(inframe)) break;
 		cv::warpPerspective(inframe, outframe, H, cv::Size(1920,1080));
