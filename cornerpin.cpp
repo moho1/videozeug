@@ -47,7 +47,9 @@ void cpvid(VideoCapture &invid, VideoWriter &outvid, cv::Mat H) {
 	oclH = H;
 #else
 #ifdef CP_OCL_CV3
-	cv::Mat inframe, outframe;
+	cv::UMat inframe, oclH;
+	cv::Mat outframe;
+	H.copyTo(oclH);
 #else
 	cv::Mat inframe, outframe;
 #endif
@@ -62,8 +64,13 @@ void cpvid(VideoCapture &invid, VideoWriter &outvid, cv::Mat H) {
 		inframe = cpuframe;
 		cv::ocl::warpPerspective(inframe, outframe, oclH, cv::Size(1920,1080));
 #else
+#ifdef CP_OCL_CV3
+		if (!invid.read(inframe)) break;
+		cv::warpPerspective(inframe, outframe, oclH, cv::Size(1920,1080));
+#else
 		if (!invid.read(inframe)) break;
 		cv::warpPerspective(inframe, outframe, H, cv::Size(1920,1080));
+#endif
 #endif
 #ifdef CP_SHOW
 		cv::imshow("Input", inframe);
